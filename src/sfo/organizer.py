@@ -189,3 +189,20 @@ def organize_files(
     sorted_files = sort_by_extension(path, flat_ext_map)
 
     execute_organization(path, sorted_files, sorted_dir_name, dry_run)
+
+
+# =========================================================
+# ========================= CLI ============================
+# =========================================================
+app = typer.Typer()
+
+
+@app.command()
+def organize(
+    path: Annotated[Path, typer.Argument()] = Path("./"),
+    apply: Annotated[
+        bool,
+        typer.Option("--apply", "-a", help="Actually move files (disable dry run)"),
+    ] = False,
+) -> None:
+    organize_files(path, dry_run=not apply)
