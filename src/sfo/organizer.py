@@ -88,3 +88,104 @@ def move_file(file_path: Path, destination_path: Path) -> None:
     except OSError as e:
         rich.print(f"[bold red]Error moving file:[/bold red] {e}")
 
+
+# =========================================================
+# ==================== CORE LOGIC ==========================
+# =========================================================
+
+
+def sort_by_extension(
+    path: Path, flat_ext_map: Dict[str, str]
+) -> Dict[str, List[Path]]:
+    """Zwraca słownik z przypisanymi ścieżkami plików do kategorii"""
+    categories = set(flat_ext_map.values()) | {"Other"}
+
+    sorted_files: Dict[str, List[Path]] = {category: [] for category in categories}
+
+    for file in get_nonhidden_files(path):
+        ext = get_file_extension(file)
+        category = get_extension_category(ext, flat_ext_map)
+        sorted_files[category].append(file)
+
+    return sorted_files
+
+
+def ensure_directories(
+    path: Path,
+    sorted_dir_name: str = SORTED_DIR_NAME,
+    ext_map: Dict[str, List[str]] = EXTENSIONS_MAP,
+) -> None:
+    """
+    Tworzy foldery z EXTENSIONS_MAP w path.
+    Bezpieczne: exist_ok=True, parents=True.
+    """
+
+    base = path / sorted_dir_name
+    for category in ext_map.keys():
+        (base / category).mkdir(parents=True, exist_ok=True)
+
+
+def execute_organization(
+    path: Path,
+    sorted_files: Dict[str, List[Path]],
+    sorted_dir_name: str,
+    dry_run: bool,
+) -> None:
+    """
+    Przeprowadza proces porządkowania plików (przenoszenia plików) zgodnie z posortowanym planem.
+    """
+
+    rich.print(
+        f"\n[bold blue]--- Starting Organization Process for {path} ---[/bold blue]"
+    )
+
+    mode = "DRY RUN (no changes)" if dry_run else "APPLY (changes will be made)"
+
+    rich.print(f"\n[bold blue]Mode:[/bold blue] {mode}")
+
+    for category, files in sorted_files.items():
+        destination_path = path / sorted_dir_name / category
+
+        if not files:
+            continue
+
+        rich.print(
+            f"\n[bold yellow]Category:[/bold yellow] {category} ({len(files)} files)"
+        )
+
+        for file in files:
+            target = destination_path / file.name
+
+            if dry_run:
+                rich.print(
+                    f"  [blue]DRY RUN:[/blue] {file.name} → {target.relative_to(Path('.'))}"
+                )
+            else:
+                move_file(file, destination_path)
+
+    rich.print("\n[bold green]Organization process finished![/bold green]")
+
+    if dry_run:
+        rich.print("\n[yellow]Dry run finished — no files were modified.[/yellow]")
+    else:
+        rich.print("\n[green]Organization complete — files were moved.[/green]")
+
+
+def organize_files(
+    path: Path,
+    flat_ext_map: Dict[str, str] = flatten_extensions_map(),
+    sorted_dir_name: str = SORTED_DIR_NAME,
+    dry_run: bool = True,
+) -> None:
+    """
+    Domyślnie opcja dry run pokazuje tylko potencjalne działanie
+    Funkcja łącząca całą logike komendy organize.
+    1. Sprawdza istniene folderów.
+    2. Sortuje pliki po rozszerzeniu
+    3. Przenosi pliki do ścieżek
+    """
+    if not dry_run:
+        ensure_directories(path)
+    sorted_files = sort_by_extension(path, flat_ext_map)
+
+    execute_organization(path, sorted_files, sorted_dir_name, dry_run)
