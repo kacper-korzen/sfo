@@ -4,9 +4,11 @@ from typing import Annotated, Dict, List
 
 import rich
 import typer
+from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Confirm
 
-from .config import EXTENSIONS_MAP, SORTED_DIR_NAME
+from .backup import create_backup
+from .config import AUTO_BACKUP, EXTENSIONS_MAP, SORTED_DIR_NAME
 
 # =========================================================
 # ======================= UTILS ============================
@@ -307,13 +309,22 @@ def organize(
     ] = False,
 ) -> None:
     """Organizes files within a specified directory into structured subdirectories based on their file extension.
-    
+
     The files found in the source path are automatically sorted and moved into categories
     (e.g., 'py', 'txt', 'images', 'Other'), preventing clutter.
-    
+
     :param path: The source directory containing the unsorted files. Defaults to the current directory.
     :param apply: If provided, files will be physically moved to their new location.
                     If omitted (default), the operation runs in dry-run mode, only printing
                     what would happen without making any changes.
     """
+    if apply:
+        should_backup = AUTO_BACKUP or Confirm.ask("Create backup?")
+        if should_backup:
+            with Progress(
+                SpinnerColumn(), TextColumn("Creating backup...")
+            ) as progress:
+                task = progress.add_task("Zipping files", total=None)
+                create_backup()
+
     organize_files(path, dry_run=not apply)
