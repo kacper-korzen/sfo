@@ -1,9 +1,7 @@
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Annotated
 
-import rich
 import typer
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
@@ -20,13 +18,17 @@ def create_backup() -> None:
                      parent directory and then moved to the current directory
                      to mimic the original behavior.
     """
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M")
-    archive_name = f"{BACKUP_NAME}{timestamp}"
-
     current_path = Path.cwd()
     parent_path = current_path.parent
-    shutil.make_archive(f"../backup/{archive_name}", "zip")
-    shutil.move(f"{parent_path}/backup/", current_path)
+    backup_path = (parent_path / f"{current_path.name}_{BACKUP_NAME}")
+
+    if not backup_path.exists():
+        backup_path.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+    archive_name = f"{BACKUP_NAME}{timestamp}"
+
+    shutil.make_archive(f"{backup_path}/{archive_name}", "zip")
 
 
 # cli
