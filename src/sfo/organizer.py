@@ -137,7 +137,7 @@ def move_file(file_path: Path, destination_path: Path) -> None:
     try:
         shutil.move(str(file_path), str(target))
         rich.print(
-            f"[green]Moved:[/green] {file_path.name} → {target.relative_to(Path('.'))}"
+            f"[green]Moved:[/green] {file_path.name} → {target}"
         )
     except OSError as e:
         rich.print(f"[bold red]Error moving file:[/bold red] {e}")
