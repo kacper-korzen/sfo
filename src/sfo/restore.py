@@ -10,10 +10,13 @@ from .organizer import move_file
 
 
 def execute_restore(dry_run: bool) -> None:
-    current_dir_parts: tuple = Path.cwd().parts
-    current_dir = Path(*current_dir_parts[-1:])
-    sorted_path: str = f"{current_dir}/{SORTED_DIR_NAME}"
-    full_current_path = Path(*current_dir_parts[:])
+    if not Path(SORTED_DIR_NAME).exists():
+        rich.print(f"[yellow]There is no directory named {SORTED_DIR_NAME}[/yellow]")
+        return
+
+
+    current_path = Path.cwd()
+    sorted_path: str = f"{current_path.name}/{SORTED_DIR_NAME}"
 
     rich.print(
         f"\n[bold blue]--- Starting Restoring Process for {sorted_path} ---[/bold blue]"
@@ -28,19 +31,16 @@ def execute_restore(dry_run: bool) -> None:
 
         for file in dir.iterdir():
             if dry_run:
-                rich.print(f"[blue]DRY RUN:[/blue] {file.name} → /{current_dir}")
+                rich.print(f"[blue]DRY RUN:[/blue] {file.name} → /{current_path.name}")
             else:
-                move_file(file, full_current_path)
-                rich.print(f"[green]Moved:[/green] {file} -> /{current_dir}")
-                shutil.move(file, full_current_path)
+                move_file(file, current_path)
 
         print()
 
     if dry_run:
         rich.print(f"{sorted_path}[bold red] directory removed[/bold red]")
-        print(f"{full_current_path}")
     else:
-        shutil.rmtree(f"{full_current_path}/sorted")
+        shutil.rmtree(f"{current_path}/sorted")
 
     rich.print("[bold green]Restoring process finished![/bold green]")
 
