@@ -10,10 +10,14 @@ from .organizer import move_file
 
 
 def execute_restore(dry_run: bool) -> None:
+    """Restores files from the sorted directory, optionally performing a dry run.
+
+    Args:
+        dry_run: If True, simulates the restore process without making changes.
+    """
     if not Path(SORTED_DIR_NAME).exists():
         rich.print(f"[yellow]There is no directory named {SORTED_DIR_NAME}[/yellow]")
         return
-
 
     current_path = Path.cwd()
     sorted_path: str = f"{current_path.name}/{SORTED_DIR_NAME}"
@@ -55,7 +59,5 @@ def restore(
         typer.Option("--apply", "-a", help="Actually move files (disable dry run)"),
     ] = False,
 ) -> None:
-    """
-    Performs a directory backup into a zip archive in current directory.
-    """
+    """Runs the restore process, applying changes only if the --apply flag is provided."""
     execute_restore(dry_run=not apply)
