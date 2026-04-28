@@ -1,6 +1,6 @@
 from typing import Dict, List
 
-# UWAGA! Zachowaj taką samą strukture EXTENSIONS_MAP
+# IMPORTANT! Keep the same structure for EXTENSIONS_MAP
 EXTENSIONS_MAP: Dict[str, List[str]] = {
     "Images": ["jpg", "jpeg", "png", "webp"],
     "Documents": ["pdf", "docx", "txt", "doc"],

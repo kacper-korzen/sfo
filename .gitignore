@@ -8,3 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Other
+.zed
+.ruff_cache
+.ropeproject
