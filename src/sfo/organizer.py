@@ -18,20 +18,15 @@ from .config import AUTO_BACKUP, EXTENSIONS_MAP, SORTED_DIR_NAME
 def flatten_extensions_map(
     exts: Dict[str, List[str]] = EXTENSIONS_MAP,
 ) -> Dict[str, str]:
-    """Flattens a nested map of extensions into a single dictionary.
+    """Flattens a dictionary mapping extensions to their respective categories.
 
-    The resulting dictionary maps each unique extension (in lowercase) to its
-    assigned category.
+    Args:
+        exts: A dictionary mapping category names to lists of extensions.
 
-    :param exts: The original nested map of extensions, where keys are categories
-                  and values are lists of extensions.
-    :type exts: Dict[str, List[str]]
-    :return: A flattened dictionary mapping extensions to categories.
-    :rtype: Dict[str, str]
+    Returns:
+        A dictionary mapping lowercase extensions to their category.
     """
-    # Możliwe poprawki:
-    # Uruchamianie raz w startowej funkcji dla oszczędzenia
-    # czasu i ustawienie globalnej zmiennej
+
     ext_map = {}
 
     for category, extensions in exts.items():
@@ -42,17 +37,14 @@ def flatten_extensions_map(
 
 
 def get_extension_category(ext: str, flat_ext_map: Dict[str, str]) -> str:
-    """Retrieves the category assigned to a specific file extension.
+    """Determines the category of a given file extension.
 
-    It searches the provided flattened map and defaults to 'Other' if the
-    extension is not found.
+    Args:
+        ext: The file extension (e.g., "txt", "jpg").
+        flat_ext_map: The pre-processed map of extensions to categories.
 
-    :param ext: The file extension (e.g., 'py', 'txt').
-    :type ext: str
-    :param flat_ext_map: The pre-computed, flattened extension map.
-    :type flat_ext_map: Dict[str, str]
-    :return: The category of the extension, or 'Other' if unknown.
-    :rtype: str
+    Returns:
+        The category name, or "Other" if the extension is unknown.
     """
 
     return flat_ext_map.get(ext, "Other")
@@ -64,17 +56,13 @@ def get_extension_category(ext: str, flat_ext_map: Dict[str, str]) -> str:
 
 
 def get_nonhidden_files(path: Path) -> List[Path]:
-    """Retrieves a list of visible files from a specified directory path.
+    """Returns a list of non-hidden files in the specified directory.
 
-    The function ignores hidden files (those starting with '.') and returns only
-    the actual file paths within the directory.
+    Args:
+        path: The directory path to scan.
 
-    :param path: The directory Path object to scan.
-    :type path: Path
-    :return: A list of Path objects representing the non-hidden files. Returns an
-             empty list if the path does not exist or is empty.
-    :rtype: List[Path]
-    """
+    Returns:
+        list[pathlib.Path]: A list of file paths that do not start with '.'."""
     if not path.exists() or not any(path.iterdir()):
         return []
 
@@ -89,35 +77,26 @@ def get_nonhidden_files(path: Path) -> List[Path]:
 
 
 def get_file_extension(file: Path) -> str:
-    """Extracts and normalizes the file extension from a given Path object.
+    """Extracts the file extension (without the dot) from a given file path.
 
-    The function removes the leading dot from the suffix and converts the result
-    to lowercase. Returns an empty string if no suffix is present.
+    Args:
+        file: The path to the file.
 
-    :param file: The Path object of the file.
-    :type file: Path
-    :return: The lowercase file extension without the leading dot (e.g., 'txt', 'py').
-    :rtype: str
-    """
+    Returns:
+        str: The lowercase file extension, or an empty string if none exists."""
     if not file.suffix:
         return ""
     return file.suffix[1:].lower()
 
 
 def move_file(file_path: Path, destination_path: Path) -> None:
-    """Moves a file from a source path to a destination directory, handling potential
-    collisions by prompting the user for replacement confirmation.
+    """Moves a file from source to destination, handling existing file conflicts.
 
-    If the target file already exists, the user is asked if the source file
-    should overwrite it. If no confirmation is given, the operation is skipped.
-
-    :param file_path: The Path object of the file to be moved (source).
-    :type file_path: Path
-    :param destination_path: The Path object representing the directory where the file should move.
-    :type destination_path: Path
-    :raises FileNotFoundError: If the source file does not exist.
-    :returns: None. Prints success or error messages to the console.
-    """
+    Args:
+        file_path: Path object of the file to move.
+        destination_path: Path object of the target directory.
+    Returns:
+        None: Prints success or error messages to the console."""
     target = destination_path / file_path.name
 
     if not file_path.exists():
@@ -136,9 +115,7 @@ def move_file(file_path: Path, destination_path: Path) -> None:
 
     try:
         shutil.move(str(file_path), str(target))
-        rich.print(
-            f"[green]Moved:[/green] {file_path.name} → {target}"
-        )
+        rich.print(f"[green]Moved:[/green] {file_path.name} → {target}")
     except OSError as e:
         rich.print(f"[bold red]Error moving file:[/bold red] {e}")
 
@@ -151,18 +128,14 @@ def move_file(file_path: Path, destination_path: Path) -> None:
 def sort_by_extension(
     path: Path, flat_ext_map: Dict[str, str]
 ) -> Dict[str, List[Path]]:
-    """Groups file paths found in a directory into a dictionary based on their assigned extension category.
+    """Sorts files in a directory into categories based on their extensions.
 
-    This function iterates through all visible files in the given path, determines the category
-    for each file based on its extension, and organizes the paths into a dictionary where
-    keys are categories and values are lists of corresponding file paths.
+    Args:
+        path: The directory path containing the files.
+        flat_ext_map: A dictionary mapping file extensions to categories.
 
-    :param path: The directory Path object containing the files to be sorted.
-    :type path: Path
-    :param flat_ext_map: The pre-computed, flattened map linking extensions to categories.
-    :type flat_ext_map: Dict[str, str]
-    :return: A dictionary mapping extension categories (including 'Other') to lists of file Paths.
-    :rtype: Dict[str, List[Path]]"""
+    Returns:
+        dict[str, list[pathlib.Path]]: A dictionary where keys are categories and values are lists of file paths belonging to that category."""
     categories = set(flat_ext_map.values()) | {"Other"}
 
     sorted_files: Dict[str, List[Path]] = {category: [] for category in categories}
@@ -180,22 +153,15 @@ def ensure_directories(
     sorted_dir_name: str = SORTED_DIR_NAME,
     ext_map: Dict[str, List[str]] = EXTENSIONS_MAP,
 ) -> None:
-    """Creates the necessary subdirectory structure within a given path based on the
-    provided extension map.
+    """Ensures necessary subdirectory structure exists for sorting files.
 
-    It ensures that all categories listed in `ext_map` exist as directories under the
-    specified sorted directory name. This operation is safe against existing directories.
+    Args:
+        path: The base directory path.
+        sorted_dir_name: The name of the main subdirectory (default: SORTED_DIR_NAME).
+        ext_map: Dictionary defining existing extension categories (default: EXTENSIONS_MAP).
 
-    :param path: The base Path object where the organized structure will be created.
-    :type path: Path
-    :param sorted_dir_name: The name of the main directory containing all sub-category folders. Defaults to
-    `SORTED_DIR_NAME`.
-    :type sorted_dir_name: str
-    :param ext_map: The map defining the extensions, used to determine the required sub-categories. Defaults to
-    `EXTENSIONS_MAP`.
-    :type ext_map: Dict[str, List[str]]
-    :return: None. Creates directories in place.
-    """
+    Returns:
+        None: Creates directories if they do not already exist."""
 
     base = path / sorted_dir_name
     for category in ext_map.keys():
@@ -208,23 +174,16 @@ def execute_organization(
     sorted_dir_name: str,
     dry_run: bool,
 ) -> None:
-    """Executes the file organization process by moving (or simulating the move) of files
-    into their respective category folders.
+    """Moves sorted files into their respective category directories.
 
-    The function iterates through the sorted file lists, calculates the final destination path,
-    and either calls `move_file` (if not a dry run) or prints a simulation message.
+    Args:
+        path: The root directory containing the files.
+        sorted_files: Dictionary of files grouped by category.
+        sorted_dir_name: Name of the main subdirectory for sorted files.
+        dry_run: If True, simulates the move without actual file operations.
 
-    :param path: The base directory Path object where the organization will occur.
-    :type path: Path
-    :param sorted_files: A dictionary mapping categories to lists of file Paths that need moving.
-    :type sorted_files: Dict[str, List[Path]]
-    :param sorted_dir_name: The name of the main destination directory.
-    :type sorted_dir_name: str
-    :param dry_run: If True, only prints what would happen without making any changes.
-                     If False, physically moves the files.
-    :type dry_run: bool
-    :return: None. Prints operation status to the console.
-    """
+    Returns:
+        None: Prints status messages indicating the execution progress."""
 
     rich.print(
         f"\n[bold blue]--- Starting Organization Process for {path} ---[/bold blue]"
@@ -268,25 +227,17 @@ def organize_files(
     sorted_dir_name: str = SORTED_DIR_NAME,
     dry_run: bool = True,
 ) -> None:
-    """Orchestrates the entire file organization workflow.
+    """Coordinates the entire file organization workflow.
 
-    This function performs the following steps:
-    1. Ensures all required category directories exist (if not in dry-run mode).
-    2. Sorts all visible files in the source directory by their extension category.
-    3. Executes the file movement (or simulation) into the structured destination directories.
+    Args:
+        path: The root directory where files are located.
+        flat_ext_map: Map from extensions to categories (default: flattened map).
+        sorted_dir_name: The name of the main directory for sorted files (default: SORTED_DIR_NAME).
+        dry_run: If True, only reports actions without moving files (default: True).
 
-    :param path: The Path object of the directory containing the unsorted files.
-    :type path: Path
-    :param flat_ext_map: The flattened extension map used for categorization. Defaults to calling
-    `flatten_extensions_map()`.
-    :type flat_ext_map: Dict[str, str]
-    :param sorted_dir_name: The name of the main destination folder for sorted files. Defaults to `SORTED_DIR_NAME`.
-    :type sorted_dir_name: str
-    :param dry_run: If True (default), the process simulates file moves without altering any files.
-                     If False, actual file movements are performed.
-    :type dry_run: bool
-    :return: None. Controls the execution flow of the organization process.
-    """
+    Returns:
+        None: Executes directory setup and file movement."""
+
     if not dry_run:
         ensure_directories(path)
     sorted_files = sort_by_extension(path, flat_ext_map)
@@ -308,16 +259,14 @@ def organize(
         typer.Option("--apply", "-a", help="Actually move files (disable dry run)"),
     ] = False,
 ) -> None:
-    """Organizes files within a specified directory into structured subdirectories based on their file extension.
+    """Orchestrates the file organization process on a specified path.
 
-    The files found in the source path are automatically sorted and moved into categories
-    (e.g., 'py', 'txt', 'images', 'Other'), preventing clutter.
+    Args:
+        path: The directory containing the files to be organized.
+        apply: If True, moves files; if False, runs in simulation (dry run).
 
-    :param path: The source directory containing the unsorted files. Defaults to the current directory.
-    :param apply: If provided, files will be physically moved to their new location.
-                    If omitted (default), the operation runs in dry-run mode, only printing
-                    what would happen without making any changes.
-    """
+    Returns:
+        None: Runs the organization logic and handles backup procedures if required."""
     if apply:
         should_backup = AUTO_BACKUP or Confirm.ask("Create backup?")
         if should_backup:
